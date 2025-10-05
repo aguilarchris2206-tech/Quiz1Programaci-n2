@@ -47,10 +47,11 @@ namespace AumentoSalarioApp
         private const int OPCION_AGREGAR_EMPLEADO = 1;
         private const int OPCION_SALIR = 2;
 
-        // Tipos de empleado
-        private const int TIPO_OPERARIO = 1;
-        private const int TIPO_TECNICO = 2;
-        private const int TIPO_PROFESIONAL = 3;
+        // Tipos de empleado (índices del array)
+        private const int TIPO_OPERARIO = 0;
+        private const int TIPO_TECNICO = 1;
+        private const int TIPO_PROFESIONAL = 2;
+        private const int TOTAL_TIPOS_EMPLEADO = 3;
 
         // Estructura para almacenar estadísticas por tipo de empleado
         private class EstadisticasEmpleado
@@ -59,14 +60,15 @@ namespace AumentoSalarioApp
             public double AcumuladoSalarioNeto { get; set; }
         }
 
-        static void Main(string[] args)
+        static void Main(string[] args) // Punto de entrada del programa
         {
             EjecutarAplicacion();
         }
 
-        static void EjecutarAplicacion()
+        static void EjecutarAplicacion() // Método principal que ejecuta la lógica del programa, parte del método Main
         {
-            var estadisticas = InicializarEstadisticas();
+            
+            EstadisticasEmpleado[] estadisticas = InicializarEstadisticasArray();
 
             while (true)
             {
@@ -78,21 +80,26 @@ namespace AumentoSalarioApp
                 }
                 else if (opcion == OPCION_AGREGAR_EMPLEADO)
                 {
-                    ProcesarNuevoEmpleado(estadisticas);
+                    ProcesarNuevoEmpleadoArray(estadisticas); // Procesar la adición de un nuevo empleado
                 }
             }
 
-            MostrarResumenFinal(estadisticas);
+            MostrarResumenFinalArray(estadisticas); // Mostrar el resumen final al salir
         }
 
-        static Dictionary<int, EstadisticasEmpleado> InicializarEstadisticas()
+       
+        static EstadisticasEmpleado[] InicializarEstadisticasArray()
         {
-            return new Dictionary<int, EstadisticasEmpleado>
+            // Crear array de 3 elementos (uno por cada tipo de empleado)
+            EstadisticasEmpleado[] arrayEstadisticas = new EstadisticasEmpleado[TOTAL_TIPOS_EMPLEADO];
+
+            // Inicializar cada posición del array
+            for (int i = 0; i < TOTAL_TIPOS_EMPLEADO; i++)
             {
-                [TIPO_OPERARIO] = new EstadisticasEmpleado(),
-                [TIPO_TECNICO] = new EstadisticasEmpleado(),
-                [TIPO_PROFESIONAL] = new EstadisticasEmpleado()
-            };
+                arrayEstadisticas[i] = new EstadisticasEmpleado();
+            }
+
+            return arrayEstadisticas;
         }
 
         static int MostrarMenu()
@@ -111,15 +118,15 @@ namespace AumentoSalarioApp
             return -1;
         }
 
-        static void ProcesarNuevoEmpleado(Dictionary<int, EstadisticasEmpleado> estadisticas)
+        static void ProcesarNuevoEmpleadoArray(EstadisticasEmpleado[] estadisticas)
         {
-            if (AgregarEmpleado(out int tipoEmpleado, out double salarioNeto))
+            if (AgregarEmpleadoArray(out int tipoEmpleado, out double salarioNeto))
             {
-                ActualizarEstadisticas(estadisticas, tipoEmpleado, salarioNeto);
+                ActualizarEstadisticasArray(estadisticas, tipoEmpleado, salarioNeto);
             }
         }
 
-        static bool AgregarEmpleado(out int tipoEmpleado, out double salarioNeto)
+        static bool AgregarEmpleadoArray(out int tipoEmpleado, out double salarioNeto)
         {
             tipoEmpleado = 0;
             salarioNeto = 0;
@@ -129,13 +136,13 @@ namespace AumentoSalarioApp
             string cedula = SolicitarCadena("Ingrese la cédula del empleado: ");
             string nombre = SolicitarCadena("Ingrese el nombre del empleado: ");
 
-            if (!SolicitarTipoEmpleado(out tipoEmpleado) ||
+            if (!SolicitarTipoEmpleadoArray(out tipoEmpleado) ||
                 !SolicitarSalarioActual(out double salarioActual))
             {
                 return false;
             }
 
-            var calculo = CalcularSalarios(salarioActual, tipoEmpleado);
+            var calculo = CalcularSalariosArray(salarioActual, tipoEmpleado);
             salarioNeto = calculo.SalarioNeto;
 
             MostrarDetalleEmpleado(nombre, cedula, salarioActual, calculo);
@@ -149,7 +156,8 @@ namespace AumentoSalarioApp
             return Console.ReadLine()?.Trim() ?? string.Empty;
         }
 
-        static bool SolicitarTipoEmpleado(out int tipoEmpleado)
+        
+        static bool SolicitarTipoEmpleadoArray(out int tipoEmpleado)
         {
             Console.WriteLine("\nTipos de empleado disponibles:");
             Console.WriteLine("1. Operario (15% de aumento)");
@@ -157,9 +165,11 @@ namespace AumentoSalarioApp
             Console.WriteLine("3. Profesional (5% de aumento)");
             Console.Write("Seleccione el tipo de empleado: ");
 
-            if (int.TryParse(Console.ReadLine(), out tipoEmpleado) &&
-                tipoEmpleado >= TIPO_OPERARIO && tipoEmpleado <= TIPO_PROFESIONAL)
+            if (int.TryParse(Console.ReadLine(), out int opcion) &&
+                opcion >= 1 && opcion <= 3)
             {
+                // Convertir opción del usuario (1,2,3) a índice del array (0,1,2)
+                tipoEmpleado = opcion - 1;
                 return true;
             }
 
@@ -181,26 +191,18 @@ namespace AumentoSalarioApp
         }
 
         static (double Aumento, double SalarioBruto, double Deduccion, double SalarioNeto)
-            CalcularSalarios(double salarioActual, int tipoEmpleado)
+            CalcularSalariosArray(double salarioActual, int tipoEmpleado)
         {
-            double porcentajeAumento = ObtenerPorcentajeAumento(tipoEmpleado);
+            // Array con los porcentajes de aumento para cada tipo
+            double[] porcentajesAumento = { 0.15, 0.10, 0.05 }; // Operario, Técnico, Profesional
+
+            double porcentajeAumento = porcentajesAumento[tipoEmpleado];
             double aumento = salarioActual * porcentajeAumento;
             double salarioBruto = salarioActual + aumento;
             double deduccion = salarioBruto * (DEDUCCION_PORCENTAJE / 100);
             double salarioNeto = salarioBruto - deduccion;
 
             return (aumento, salarioBruto, deduccion, salarioNeto);
-        }
-
-        static double ObtenerPorcentajeAumento(int tipoEmpleado)
-        {
-            return tipoEmpleado switch
-            {
-                TIPO_OPERARIO => 0.15,
-                TIPO_TECNICO => 0.10,
-                TIPO_PROFESIONAL => 0.05,
-                _ => 0
-            };
         }
 
         static void MostrarDetalleEmpleado(string nombre, string cedula, double salarioActual,
@@ -217,27 +219,35 @@ namespace AumentoSalarioApp
             Console.WriteLine("----------------------------");
         }
 
-        static void ActualizarEstadisticas(Dictionary<int, EstadisticasEmpleado> estadisticas, int tipoEmpleado, double salarioNeto)
+        
+        static void ActualizarEstadisticasArray(EstadisticasEmpleado[] estadisticas, int tipoEmpleado, double salarioNeto)
         {
-            if (estadisticas.ContainsKey(tipoEmpleado))
+            // Validar que el índice esté dentro del rango del array
+            if (tipoEmpleado >= 0 && tipoEmpleado < estadisticas.Length)
             {
                 estadisticas[tipoEmpleado].Cantidad++;
                 estadisticas[tipoEmpleado].AcumuladoSalarioNeto += salarioNeto;
             }
         }
 
-        static void MostrarResumenFinal(Dictionary<int, EstadisticasEmpleado> estadisticas)
+        
+        static void MostrarResumenFinalArray(EstadisticasEmpleado[] estadisticas)
         {
             Console.WriteLine("\n=== RESUMEN FINAL ===");
 
-            MostrarResumenTipo("Operario", estadisticas[TIPO_OPERARIO]);
-            MostrarResumenTipo("Técnico", estadisticas[TIPO_TECNICO]);
-            MostrarResumenTipo("Profesional", estadisticas[TIPO_PROFESIONAL]);
+            // Array con los nombres de los tipos de empleado
+            string[] nombresTipos = { "Operario", "Técnico", "Profesional" };
+
+            // Recorrer el array usando for
+            for (int i = 0; i < estadisticas.Length; i++)
+            {
+                MostrarResumenTipoArray(nombresTipos[i], estadisticas[i]);
+            }
 
             Console.WriteLine("¡Gracias por usar el sistema!");
         }
 
-        static void MostrarResumenTipo(string tipo, EstadisticasEmpleado stats)
+        static void MostrarResumenTipoArray(string tipo, EstadisticasEmpleado stats)
         {
             double promedio = stats.Cantidad > 0 ? stats.AcumuladoSalarioNeto / stats.Cantidad : 0;
 
